@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Somnil</string>
+    <string name="home">首页</string>
+    <string name="live_monitor">监测</string>
+    <string name="history">历史</string>
+    <string name="settings">设置</string>
+    
+    <!-- Connection -->
+    <string name="search_devices">搜索设备</string>
+    <string name="disconnect">断开连接</string>
+    <string name="connecting">连接中...</string>
+    <string name="connected">已连接</string>
+    <string name="disconnected">未连接</string>
+    <string name="signal_strength">信号强度</string>
+    
+    <!-- Monitoring -->
+    <string name="start_monitoring">开始监测</string>
+    <string name="stop_monitoring">停止监测</string>
+    <string name="monitoring">监测中</string>
+    <string name="calibrating">校准中</string>
+    <string name="anxiety_detected">焦虑!</string>
+    <string name="intervention_active">干预中</string>
+    
+    <!-- Detection -->
+    <string name="stalta_threshold">STA/LTA 阈值</string>
+    <string name="sensitivity">检测灵敏度</string>
+    <string name="sensitivity_low">低</string>
+    <string name="sensitivity_medium">中</string>
+    <string name="sensitivity_high">高</string>
+    <string name="effective_threshold">有效阈值</string>
+    
+    <!-- Intervention -->
+    <string name="intervention">干预方式</string>
+    <string name="sound_intervention">声干预</string>
+    <string name="temperature_intervention">温干预</string>
+    <string name="aromatherapy_intervention">香干预</string>
+    
+    <!-- Audio -->
+    <string name="audio_preview">音频预览</string>
+    <string name="pink_noise">粉红噪音</string>
+    <string name="theta_wave">Theta波</string>
+    <string name="volume">音量</string>
+    
+    <!-- Home Assistant -->
+    <string name="home_assistant">Home Assistant 集成</string>
+    <string name="broker_address">Broker 地址</string>
+    <string name="mqtt_connected">已连接</string>
+    <string name="mqtt_disconnected">未连接</string>
+    
+    <!-- History -->
+    <string name="sleep_history">睡眠历史</string>
+    <string name="no_sessions">暂无睡眠记录</string>
+    <string name="sleep_duration">睡眠时长</string>
+    <string name="anxiety_events">焦虑事件</string>
+    <string name="sleep_quality">质量评分</string>
+    <string name="sleep_stages">睡眠阶段</string>
+    
+    <!-- Permissions -->
+    <string name="bluetooth_permission_required">需要蓝牙权限</string>
+    <string name="bluetooth_permission_rationale">Somnil 需要蓝牙权限来连接您的睡眠监测设备。</string>
+    <string name="health_connect_permission_required">需要 Health Connect 权限</string>
+    <string name="health_connect_permission_rationale">Somnil 需要访问 Health Connect 来同步您的睡眠数据。</string>
+    <string name="grant_permission">授权</string>
+    
+    <!-- About -->
+    <string name="version">版本</string>
+    <string name="about">关于</string>
+</resources>
