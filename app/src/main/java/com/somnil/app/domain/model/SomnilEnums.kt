@@ -76,6 +76,7 @@ sealed class ConnectionState(
     data class Connecting(val deviceName: String) : ConnectionState("连接 $deviceName...", false)
     data class Reconnecting(val deviceName: String) : ConnectionState("重新连接 $deviceName...", false)
     data class Connected(val deviceName: String, val rssi: Int) : ConnectionState(deviceName, true)
+    data class Error(val reason: String) : ConnectionState("连接失败", false)
 }
 
 /**

@@ -18,6 +18,8 @@ import com.somnil.app.ui.screens.history.HistoryView
 import com.somnil.app.ui.screens.home.HomeView
 import com.somnil.app.ui.screens.live.LiveMonitorView
 import com.somnil.app.ui.screens.settings.SettingsView
+import com.somnil.app.ui.screens.smarthome.SmartHomeEcosystemScreen
+import com.somnil.app.ui.screens.smarthome.SmartHomeGuideScreen
 import com.somnil.app.ui.screens.training.TrainingView
 import com.somnil.app.ui.theme.*
 
@@ -35,6 +37,8 @@ sealed class Screen(
     data object History : Screen("history", "历史", Icons.Filled.History, Icons.Outlined.History)
     data object Training : Screen("training", "训练", Icons.Filled.TrendingUp, Icons.Outlined.TrendingUp)
     data object Settings : Screen("settings", "设置", Icons.Filled.Settings, Icons.Outlined.Settings)
+    data object SmartHomeEcosystem : Screen("smarthome_ecosystem", "智能家居", Icons.Filled.Devices, Icons.Outlined.Devices)
+    // SmartHomeGuide takes an ecosystem id as argument; route defined inline below
 }
 
 private val bottomNavItems = listOf(
@@ -122,7 +126,31 @@ fun SomnilApp() {
             }
 
             composable(Screen.Settings.route) {
-                SettingsView()
+                SettingsView(
+                    onNavigateToSmartHome = {
+                        navController.navigate(Screen.SmartHomeEcosystem.route)
+                    }
+                )
+            }
+
+            composable(Screen.SmartHomeEcosystem.route) {
+                SmartHomeEcosystemScreen(
+                    onEcosystemSelected = { ecosystem ->
+                        navController.navigate("smarthome_guide/${ecosystem.id}")
+                    }
+                )
+            }
+
+            composable("smarthome_guide/{ecosystemId}") { backStackEntry ->
+                val ecosystemId = backStackEntry.arguments?.getString("ecosystemId") ?: ""
+                val ecosystem = com.somnil.app.data.model.SmartHomeGuideRepository.allEcosystems
+                    .find { it.id == ecosystemId }
+                if (ecosystem != null) {
+                    SmartHomeGuideScreen(
+                        ecosystem = ecosystem,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
             }
         }
     }

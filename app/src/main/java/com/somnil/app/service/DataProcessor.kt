@@ -20,7 +20,8 @@ import kotlin.math.sin
  */
 @Singleton
 class DataProcessor @Inject constructor(
-    private val bleManager: BLEManager
+    private val bleManager: BLEManager,
+    private val pressureHistoryManager: PressureHistoryManager
 ) {
     companion object {
         // Detection constants (mirrors iOS DetectionConstants)
@@ -100,6 +101,9 @@ class DataProcessor @Inject constructor(
     private val _emgHistory = MutableStateFlow<List<Double>>(emptyList())
     val emgHistory: StateFlow<List<Double>> = _emgHistory.asStateFlow()
 
+    // Session beta power collection (for nightly summary)
+    private val sessionBetaPowers = mutableListOf<Double>()
+
     // Internal buffers
     private val staBuffer = ArrayDeque<Double>(100)
     private val ltaBuffer = ArrayDeque<Double>(6000)
@@ -140,6 +144,9 @@ class DataProcessor @Inject constructor(
             sampleBuffers.forEach { it.clear() }
         }
 
+        // Clear session beta power collection
+        sessionBetaPowers.clear()
+
         // Start calibration (30 seconds like iOS)
         scope.launch {
             delay(30_000)
@@ -155,11 +162,66 @@ class DataProcessor @Inject constructor(
 
         // Finalize session
         _currentSession.value?.let { session ->
-            _currentSession.value = session.copy(
+            val finalizedSession = session.copy(
                 endTime = System.currentTimeMillis(),
                 sleepQualityScore = calculateSleepQuality()
             )
+            _currentSession.value = finalizedSession
+
+            // Record NightlySummary to PressureHistoryManager (only on complete session end)
+            scope.launch {
+                recordNightlySummary(finalizedSession)
+            }
         }
+    }
+
+    /**
+     * Record a NightlySummary when monitoring stops (end of complete sleep session).
+     * Only records on stopMonitoring(), not on mid-night arousals.
+     * Mirrors iOS stopMonitoring() recording logic.
+     */
+    private suspend fun recordNightlySummary(session: SleepSession) {
+        // Compute median beta power from collected session values
+        val medianBeta = if (sessionBetaPowers.isNotEmpty()) {
+            sessionBetaPowers.sorted().let { sorted ->
+                val mid = sorted.size / 2
+                if (sorted.size % 2 == 0) {
+                    (sorted[mid - 1] + sorted[mid]) / 2.0
+                } else {
+                    sorted[mid]
+                }
+            }
+        } else {
+            0.0
+        }
+
+        // Compute sleep efficiency from session duration and stage durations
+        val totalDurationMs = (session.endTime ?: System.currentTimeMillis()) - session.startTime
+        val totalDurationSec = totalDurationMs / 1000.0
+        val sleepTimeSec = session.stageDurations
+            .filterKeys { it != SleepStage.AWAKE }
+            .values
+            .sum()
+        val efficiency = if (totalDurationSec > 0) sleepTimeSec / totalDurationSec else 0.0
+
+        val summary = NightlySummary(
+            date = getStartOfDay(session.startTime),
+            medianBetaPower = medianBeta,
+            anxietyArousalCount = session.anxietyEventCount,
+            sleepEfficiency = efficiency.coerceIn(0.0, 1.0)
+        )
+
+        pressureHistoryManager.recordNightlySummary(summary)
+    }
+
+    private fun getStartOfDay(timestamp: Long): Long {
+        val calendar = java.util.Calendar.getInstance()
+        calendar.timeInMillis = timestamp
+        calendar.set(java.util.Calendar.HOUR_OF_DAY, 0)
+        calendar.set(java.util.Calendar.MINUTE, 0)
+        calendar.set(java.util.Calendar.SECOND, 0)
+        calendar.set(java.util.Calendar.MILLISECOND, 0)
+        return calendar.timeInMillis
     }
 
     fun updateSettings(newSettings: DetectionSettings) {
@@ -213,6 +275,11 @@ class DataProcessor @Inject constructor(
         _thetaHistory.value = (_thetaHistory.value + theta).takeLast(100)
         _deltaHistory.value = (_deltaHistory.value + delta).takeLast(100)
         _emgHistory.value = (_emgHistory.value + emg).takeLast(100)
+
+        // Collect session beta powers for nightly summary
+        if (beta > 0) {
+            sessionBetaPowers.add(beta)
+        }
 
         // Check anxiety detection
         checkAnxietyThreshold()

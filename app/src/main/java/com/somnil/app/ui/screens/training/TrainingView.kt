@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.somnil.app.domain.model.TrainingPhase
+import com.somnil.app.ui.components.SomnilCard
 import com.somnil.app.ui.theme.*
 
 /**
@@ -281,7 +282,7 @@ private fun DayProgressCard(
                 shape = RoundedCornerShape(12.dp)
             )
             .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment = Alignment.Top,
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Day indicator circle
@@ -312,7 +313,7 @@ private fun DayProgressCard(
         // Day info
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
-                text = "第 $day 天",
+                text = "第 $day 天${if (day == 1) "「首次适配」" else if (day == 2) "「强化训练」" else "「完成适配」"}",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = textColor
@@ -321,6 +322,18 @@ private fun DayProgressCard(
                 text = description,
                 fontSize = 12.sp,
                 color = TextSecondary
+            )
+            // Issue 5: Add operation instructions for each day
+            Text(
+                text = when (day) {
+                    1 -> "戴上设备，安静躺下，保持正常呼吸。我们会学习你的睡眠基线。"
+                    2 -> "继续佩戴，我们将强化对您焦虑模式的识别。"
+                    3 -> "完成最终适配，确定最优干预参数和阈值。"
+                    else -> ""
+                },
+                fontSize = 12.sp,
+                color = TextSecondary,
+                modifier = Modifier.padding(top = 2.dp)
             )
         }
 

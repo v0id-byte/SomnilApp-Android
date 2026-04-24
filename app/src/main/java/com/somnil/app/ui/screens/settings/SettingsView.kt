@@ -1,8 +1,10 @@
 package com.somnil.app.ui.screens.settings
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -14,12 +16,16 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.somnil.app.domain.model.*
 import com.somnil.app.ui.components.SomnilCard
 import com.somnil.app.ui.theme.*
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.sp
 
 /**
  * SettingsView - mirrors iOS SettingsView.
@@ -28,16 +34,20 @@ import com.somnil.app.ui.theme.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsView(
-    viewModel: SettingsViewModel = hiltViewModel()
+    viewModel: SettingsViewModel = hiltViewModel(),
+    onNavigateToSmartHome: () -> Unit = {}
 ) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val mqttState by viewModel.mqttState.collectAsStateWithLifecycle()
     val audioState by viewModel.audioState.collectAsStateWithLifecycle()
+    val latencyResult by viewModel.latencyResult.collectAsStateWithLifecycle()
 
     val staltaThreshold = remember { mutableStateOf(settings.staltaThreshold) }
     val selectedSensitivity = remember { mutableStateOf(settings.sensitivity) }
     val haHost = remember { mutableStateOf("homeassistant.local") }
     val haPort = remember { mutableStateOf("1883") }
+    val haUsername = remember { mutableStateOf("") }
+    val haPassword = remember { mutableStateOf("") }
 
     Scaffold(
         containerColor = BackgroundDark,
@@ -103,10 +113,28 @@ fun SettingsView(
                 mqttState = mqttState,
                 host = haHost.value,
                 port = haPort.value,
+                username = haUsername.value,
+                password = haPassword.value,
+                onHostChange = { haHost.value = it },
+                onPortChange = { haPort.value = it },
+                onUsernameChange = { haUsername.value = it },
+                onPasswordChange = { haPassword.value = it },
                 onConnect = {
                     viewModel.connectMQTT(haHost.value, haPort.value.toIntOrNull() ?: 1883)
                 },
                 onDisconnect = { viewModel.disconnectMQTT() }
+            )
+
+            // Smart Home Setup Guide
+            SmartHomeGuideCard(
+                onClick = onNavigateToSmartHome
+            )
+
+            // Debug: Latency Measurement Panel
+            DebugLatencyCard(
+                latencyResult = latencyResult,
+                onTestLatency = { viewModel.testLatency() },
+                onClearResult = { viewModel.clearLatencyResult() }
             )
 
             // About
@@ -170,11 +198,24 @@ private fun DetectionParametersCard(
                 }
             }
 
+            // Issue 12: Threshold slider explanation
             Text(
-                text = "阈值越低，检测越敏感，焦虑事件记录越多",
-                style = MaterialTheme.typography.bodySmall,
-                color = TextSecondary
+                text = "📌 阈值说明",
+                style = MaterialTheme.typography.labelMedium,
+                color = AccentBlue
             )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(InputBackground)
+                    .padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text("• 值越低 = 越敏感 = 更多干预（可能误报）", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                Text("• 值越高 = 越宽松 = 更少干预（可能漏报）", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                Text("建议保持默认 1.5，无需频繁调整", style = MaterialTheme.typography.bodySmall, color = AccentBlue)
+            }
         }
     }
 }
@@ -282,11 +323,19 @@ private fun InterventionCard(
                 )
             }
 
-            Text(
-                text = "焦虑检测触发后，将自动启用已开启的干预方式",
-                style = MaterialTheme.typography.bodySmall,
-                color = TextSecondary
-            )
+            // Issue 13: Intervention descriptions
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(InputBackground)
+                    .padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Text("🔊 声音干预：检测到焦虑时自动播放引导音频", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                Text("🌡️ 温度干预（需设备支持）：温控设备自动调节", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                Text("🌸 香薰干预（需设备支持）：香薰机自动释放", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+            }
         }
     }
 }
@@ -378,6 +427,51 @@ private fun AudioPreviewCard(
                 color = TextSecondary
             )
 
+            // Issue 14: Audio mode descriptions
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(InputBackground)
+                    .padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                val pinkDesc = "🎵 粉红噪声：柔和白噪声，掩盖环境噪音，适合助眠"
+                val thetaDesc = "🌊 Theta 波：4-8Hz 低频音，诱导深度放松"
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = pinkDesc,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary,
+                        modifier = Modifier.weight(1f)
+                    )
+                    TextButton(onClick = { onPlayMode(com.somnil.app.service.AudioPlayerManager.AudioMode.PINK_NOISE) }) {
+                        Text("▶ 试听", color = AccentBlue)
+                    }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = thetaDesc,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary,
+                        modifier = Modifier.weight(1f)
+                    )
+                    TextButton(onClick = { onPlayMode(com.somnil.app.service.AudioPlayerManager.AudioMode.THETA_WAVE) }) {
+                        Text("▶ 试听", color = AccentBlue)
+                    }
+                }
+            }
+
             // Audio mode buttons
             Row(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -436,7 +530,13 @@ private fun HomeAssistantCard(
     host: String,
     port: String,
     onConnect: () -> Unit,
-    onDisconnect: () -> Unit
+    onDisconnect: () -> Unit,
+    onHostChange: (String) -> Unit = {},
+    onPortChange: (String) -> Unit = {},
+    onUsernameChange: (String) -> Unit = {},
+    onPasswordChange: (String) -> Unit = {},
+    username: String = "",
+    password: String = ""
 ) {
     SomnilCard {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -472,6 +572,127 @@ private fun HomeAssistantCard(
                         style = MaterialTheme.typography.labelSmall,
                         color = if (mqttState) Success else Warning
                     )
+                }
+            }
+
+            // Issue 7: HA address guidance
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(InputBackground)
+                    .padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text("📍 Home Assistant 地址", style = MaterialTheme.typography.labelMedium, color = AccentBlue)
+                Text("在浏览器打开 Home Assistant，复制地址栏的 URL 填入", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                Text("示例：http://192.168.1.100:8123", style = MaterialTheme.typography.bodySmallMono, color = TextSecondary)
+            }
+
+            // Broker address field
+            OutlinedTextField(
+                value = host,
+                onValueChange = onHostChange,
+                label = { Text("Broker 地址 *") },
+                placeholder = { Text("homeassistant.local 或 IP 地址") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = AccentPurple,
+                    unfocusedBorderColor = CardBorder,
+                    focusedLabelColor = AccentPurple,
+                    unfocusedLabelColor = TextSecondary,
+                    focusedTextColor = TextPrimary,
+                    unfocusedTextColor = TextPrimary,
+                    cursorColor = AccentPurple
+                ),
+                shape = RoundedCornerShape(10.dp)
+            )
+
+            // Port field
+            OutlinedTextField(
+                value = port,
+                onValueChange = onPortChange,
+                label = { Text("端口 *") },
+                placeholder = { Text("1883") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = AccentPurple,
+                    unfocusedBorderColor = CardBorder,
+                    focusedLabelColor = AccentPurple,
+                    unfocusedLabelColor = TextSecondary,
+                    focusedTextColor = TextPrimary,
+                    unfocusedTextColor = TextPrimary,
+                    cursorColor = AccentPurple
+                ),
+                shape = RoundedCornerShape(10.dp)
+            )
+
+            // Username field
+            OutlinedTextField(
+                value = username,
+                onValueChange = onUsernameChange,
+                label = { Text("用户名") },
+                placeholder = { Text("如未设置则留空") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = AccentPurple,
+                    unfocusedBorderColor = CardBorder,
+                    focusedLabelColor = AccentPurple,
+                    unfocusedLabelColor = TextSecondary,
+                    focusedTextColor = TextPrimary,
+                    unfocusedTextColor = TextPrimary,
+                    cursorColor = AccentPurple
+                ),
+                shape = RoundedCornerShape(10.dp)
+            )
+
+            // Password field
+            OutlinedTextField(
+                value = password,
+                onValueChange = onPasswordChange,
+                label = { Text("密码") },
+                placeholder = { Text("如未设置则留空") },
+                singleLine = true,
+                visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = AccentPurple,
+                    unfocusedBorderColor = CardBorder,
+                    focusedLabelColor = AccentPurple,
+                    unfocusedLabelColor = TextSecondary,
+                    focusedTextColor = TextPrimary,
+                    unfocusedTextColor = TextPrimary,
+                    cursorColor = AccentPurple
+                ),
+                shape = RoundedCornerShape(10.dp)
+            )
+
+            // Issue 8: Required field note
+            Text(
+                text = "* 为必填项。用户名密码如未在 HA 设置则留空",
+                style = MaterialTheme.typography.bodySmall,
+                color = TextSecondary
+            )
+
+            // MQTT connection failure guidance (Issue 18)
+            if (!mqttState) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Warning.copy(alpha = 0.1f))
+                        .padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text("❌ 连接失败？", style = MaterialTheme.typography.labelMedium, color = Warning)
+                    Text("请按以下步骤排查：", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                    Text("1. 确认 Home Assistant 已启动且 MQTT 插件已安装", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                    Text("2. 确认 Broker 地址和端口正确", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                    Text("3. 确认手机和 HA 在同一局域网内", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                    Text("4. 如使用了认证，确认用户名密码正确", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
                 }
             }
 
@@ -519,5 +740,162 @@ private fun AboutRow(label: String, value: String) {
     ) {
         Text(label, style = MaterialTheme.typography.bodyMedium, color = TextSecondary)
         Text(value, style = MaterialTheme.typography.bodyMedium, color = TextPrimary)
+    }
+}
+
+/**
+ * Card with a button that opens the smart home ecosystem guide.
+ */
+@Composable
+private fun SmartHomeGuideCard(
+    onClick: () -> Unit
+) {
+    SomnilCard {
+        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(Icons.Default.Devices, contentDescription = null, tint = AccentPurple)
+                Text(
+                    text = "智能家居配置",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = TextPrimary
+                )
+            }
+
+            Text(
+                text = "通过 Home Assistant、Apple Home、小米米家等平台连接 Somnil，一步一步引导配置。",
+                style = MaterialTheme.typography.bodySmall,
+                color = TextSecondary
+            )
+
+            Button(
+                onClick = onClick,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = AccentPurple
+                ),
+                shape = RoundedCornerShape(10.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(Icons.Default.Devices, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("开始配置")
+            }
+        }
+    }
+}
+
+/**
+ * Debug latency measurement card.
+ * Mirrors iOS debug panel test latency button.
+ * Issue 19: Added developer feature label.
+ */
+@Composable
+private fun DebugLatencyCard(
+    latencyResult: com.somnil.app.ui.screens.settings.DebugLatencyResult?,
+    onTestLatency: () -> Unit,
+    onClearResult: () -> Unit
+) {
+    SomnilCard {
+        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            // Issue 19: Developer feature label
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(Warning.copy(alpha = 0.1f))
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("🔧", style = MaterialTheme.typography.labelMedium)
+                Text(
+                    text = "开发者功能（普通用户无需操作）",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Warning
+                )
+            }
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(Icons.Default.Speed, contentDescription = null, tint = AccentPurple)
+                Text(
+                    text = "调试：延迟测量",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = TextPrimary
+                )
+            }
+
+            Text(
+                text = "记录 EEG 样本时间戳 → 执行分类 → 测量端到端延迟",
+                style = MaterialTheme.typography.bodySmall,
+                color = TextSecondary
+            )
+
+            Button(
+                onClick = onTestLatency,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = AccentBlue
+                ),
+                shape = RoundedCornerShape(10.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(Icons.Default.PlayArrow, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("测试延迟")
+            }
+
+            if (latencyResult != null && latencyResult.isComplete) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(InputBackground)
+                        .padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "测量结果",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = AccentBlue
+                    )
+                    LatencyRow("样本时间戳", latencyResult.sampleTimestamp.toString())
+                    LatencyRow("分类时间戳", latencyResult.classificationTimestamp.toString())
+                    LatencyRow("总延迟", "${latencyResult.totalLatencyMs} ms")
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Button(
+                        onClick = onClearResult,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = InputBackground,
+                            contentColor = TextSecondary
+                        ),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("清除结果", style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LatencyRow(label: String, value: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(label, style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+        Text(
+            value,
+            style = MaterialTheme.typography.bodySmallMono,
+            color = TextPrimary
+        )
     }
 }

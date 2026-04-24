@@ -248,6 +248,22 @@ private fun STALTAGaugeCard(
                     )
                 }
             }
+
+            // Issue 9: STA/LTA explanation
+            Spacer(modifier = Modifier.height(12.dp))
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(InputBackground)
+                    .padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text("📊 焦虑事件说明", style = MaterialTheme.typography.labelMedium, color = AccentBlue)
+                Text("• STA/LTA > 1.0 表示焦虑状态正在发展", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                Text("• 数值越高代表焦虑程度越强", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                Text("• 正常睡眠中也会出现少量焦虑事件，无需过度担心", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+            }
         }
     }
 }

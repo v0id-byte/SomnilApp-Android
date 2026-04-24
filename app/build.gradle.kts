@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.dagger.hilt.android")
     id("org.jetbrains.kotlin.plugin.serialization")
     kotlin("kapt")
@@ -46,10 +47,6 @@ android {
         compose = true
     }
 
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.8"
-    }
-
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -75,8 +72,8 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.7.7")
 
     // Hilt
-    implementation("com.google.dagger:hilt-android:2.50")
-    kapt("com.google.dagger:hilt-compiler:2.50")
+    implementation("com.google.dagger:hilt-android:2.52")
+    kapt("com.google.dagger:hilt-compiler:2.52")
     implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
 
     // ViewModel
@@ -107,7 +104,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-process:2.7.0")
 
     // FFT - JTransforms for real EEG band power calculation
-    implementation("org.jtransforms:jtransforms:2.4.0")
+    implementation("com.github.wendykierp:JTransforms:3.2")
 
     // Charts (Vico - modern Compose charts library)
     implementation("com.patrykandpatrick.vico:compose-m3:1.13.1")

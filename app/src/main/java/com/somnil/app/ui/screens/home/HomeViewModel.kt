@@ -6,18 +6,23 @@ import com.somnil.app.domain.model.ConnectionState
 import com.somnil.app.domain.model.DetectionState
 import com.somnil.app.domain.model.DiscoveredDevice
 import com.somnil.app.domain.model.SleepSession
+import com.somnil.app.domain.model.TrainingPhase
 import com.somnil.app.service.BLEManager
 import com.somnil.app.service.DataProcessor
+import com.somnil.app.service.TrainingDataStore
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val bleManager: BLEManager,
-    private val dataProcessor: DataProcessor
+    private val dataProcessor: DataProcessor,
+    private val trainingDataStore: TrainingDataStore
 ) : ViewModel() {
 
     val connectionState: StateFlow<ConnectionState> = bleManager.connectionState
@@ -34,6 +39,17 @@ class HomeViewModel @Inject constructor(
 
     val currentSession: StateFlow<SleepSession?> = dataProcessor.currentSession
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    private val _trainingPhase = MutableStateFlow(trainingDataStore.loadTrainingPhase())
+    val trainingPhase: StateFlow<TrainingPhase> = _trainingPhase
+
+    private val _isTrainingCompleted = MutableStateFlow(trainingDataStore.isTrainingCompleted)
+    val isTrainingCompleted: StateFlow<Boolean> = _isTrainingCompleted.asStateFlow()
+
+    fun refreshTrainingPhase() {
+        _trainingPhase.value = trainingDataStore.loadTrainingPhase()
+        _isTrainingCompleted.value = trainingDataStore.isTrainingCompleted
+    }
 
     fun startScanning() {
         bleManager.startScanning()

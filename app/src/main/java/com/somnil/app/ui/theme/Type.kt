@@ -89,28 +89,6 @@ val SomnilTypography = Typography(
         lineHeight = 16.sp,
         letterSpacing = 0.4.sp
     ),
-    // Monospace for data values (mirrors iOS .system(.body, design: .monospaced))
-    bodyLargeMono = TextStyle(
-        fontFamily = FontFamily.Monospace,
-        fontWeight = FontWeight.Normal,
-        fontSize = 16.sp,
-        lineHeight = 24.sp,
-        letterSpacing = 0.sp
-    ),
-    bodyMediumMono = TextStyle(
-        fontFamily = FontFamily.Monospace,
-        fontWeight = FontWeight.Normal,
-        fontSize = 14.sp,
-        lineHeight = 20.sp,
-        letterSpacing = 0.sp
-    ),
-    bodySmallMono = TextStyle(
-        fontFamily = FontFamily.Monospace,
-        fontWeight = FontWeight.Normal,
-        fontSize = 12.sp,
-        lineHeight = 16.sp,
-        letterSpacing = 0.sp
-    ),
     // Caption
     labelLarge = TextStyle(
         fontFamily = FontFamily.Default,
@@ -134,3 +112,31 @@ val SomnilTypography = Typography(
         letterSpacing = 0.5.sp
     )
 )
+
+// Extension properties to expose monospace text styles (mirrors iOS .system(.body, design: .monospaced))
+val Typography.bodyLargeMono: TextStyle
+    get() = TextStyle(
+        fontFamily = FontFamily.Monospace,
+        fontWeight = FontWeight.Normal,
+        fontSize = 16.sp,
+        lineHeight = 24.sp,
+        letterSpacing = 0.sp
+    )
+
+val Typography.bodyMediumMono: TextStyle
+    get() = TextStyle(
+        fontFamily = FontFamily.Monospace,
+        fontWeight = FontWeight.Normal,
+        fontSize = 14.sp,
+        lineHeight = 20.sp,
+        letterSpacing = 0.sp
+    )
+
+val Typography.bodySmallMono: TextStyle
+    get() = TextStyle(
+        fontFamily = FontFamily.Monospace,
+        fontWeight = FontWeight.Normal,
+        fontSize = 12.sp,
+        lineHeight = 16.sp,
+        letterSpacing = 0.sp
+    )

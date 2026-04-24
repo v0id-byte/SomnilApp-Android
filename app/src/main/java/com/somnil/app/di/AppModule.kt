@@ -51,5 +51,11 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun providePressureHistoryManager(
+        @ApplicationContext context: Context
+    ): PressureHistoryManager = PressureHistoryManager(context)
+
+    @Provides
+    @Singleton
     fun provideSomnilRepository(): SomnilRepository = SomnilRepository()
 }

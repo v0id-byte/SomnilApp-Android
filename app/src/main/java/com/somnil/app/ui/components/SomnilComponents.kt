@@ -264,7 +264,7 @@ fun SleepStageBar(
         com.somnil.app.domain.model.SleepStage.entries.forEach { stage ->
             val duration = durations[stage] ?: 0.0
             val ratio = if (totalDuration > 0) duration / totalDuration else 0.0
-            val width = if (ratio > 0) (maxOf(modifier as? androidx.compose.ui.layout.LayoutWidthModifier?.let { ratio * 100 } ?: 0.0, 2.0)).dp else 0.dp
+            val width = if (ratio > 0) maxOf(ratio * 100.0, 2.0).dp else 0.dp
 
             Box(
                 modifier = Modifier
