@@ -1,6 +1,9 @@
 package com.somnil.app.di
 
 import android.content.Context
+import androidx.room.Room
+import com.somnil.app.data.local.SleepSessionDao
+import com.somnil.app.data.local.SomnilDatabase
 import com.somnil.app.network.SomnilRepository
 import com.somnil.app.service.*
 import com.somnil.app.domain.model.TrainingPhase
@@ -58,4 +61,18 @@ object AppModule {
     @Provides
     @Singleton
     fun provideSomnilRepository(): SomnilRepository = SomnilRepository()
+
+    @Provides
+    @Singleton
+    fun provideSomnilDatabase(
+        @ApplicationContext context: Context
+    ): SomnilDatabase = Room.databaseBuilder(
+        context,
+        SomnilDatabase::class.java,
+        "somnil_database"
+    ).build()
+
+    @Provides
+    @Singleton
+    fun provideSleepSessionDao(database: SomnilDatabase): SleepSessionDao = database.sleepSessionDao()
 }

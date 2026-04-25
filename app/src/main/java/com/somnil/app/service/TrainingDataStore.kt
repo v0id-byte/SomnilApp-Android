@@ -164,6 +164,7 @@ class TrainingDataStore @Inject constructor(
         // Use min(completedDays, daysPassed) to prevent advancing beyond actual elapsed days
         val effectiveDays = minOf(phase.completedDays, daysPassed)
         if (effectiveDays < TrainingPhase.REQUIRED_TRAINING_DAYS &&
+            phase.completedDays < TrainingPhase.REQUIRED_TRAINING_DAYS &&
             phase.successfulAdaptations >= effectiveDays + 1) {
             val newCompletedDays = minOf(TrainingPhase.REQUIRED_TRAINING_DAYS, effectiveDays + 1)
             phase = phase.copy(completedDays = newCompletedDays)

@@ -16,9 +16,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import android.content.pm.PackageManager
+import androidx.compose.ui.platform.LocalContext
 import com.somnil.app.domain.model.ConnectionState
 import com.somnil.app.domain.model.DetectionState
 import com.somnil.app.ui.components.SomnilCard
@@ -36,6 +43,28 @@ fun HomeView(
     onNavigateToSettings: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
+    var hasPermissions by remember { mutableStateOf(false) }
+    val permissions = remember {
+        arrayOf(
+            android.Manifest.permission.BLUETOOTH_SCAN,
+            android.Manifest.permission.BLUETOOTH_CONNECT,
+            android.Manifest.permission.ACCESS_FINE_LOCATION,
+            android.Manifest.permission.POST_NOTIFICATIONS
+        )
+    }
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { result ->
+        hasPermissions = result.values.all { it }
+    }
+
+    LaunchedEffect(Unit) {
+        hasPermissions = permissions.all {
+            ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
+        }
+    }
+
     val connectionState by viewModel.connectionState.collectAsStateWithLifecycle()
     val currentState by viewModel.currentState.collectAsStateWithLifecycle()
     val currentSession by viewModel.currentSession.collectAsStateWithLifecycle()
@@ -77,6 +106,43 @@ fun HomeView(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Spacer(modifier = Modifier.height(8.dp))
+
+            // Permission request card (Android 12+ BLE)
+            if (!hasPermissions) {
+                SomnilCard {
+                    Column(modifier = Modifier.padding(4.dp)) {
+                        Text(
+                            "需要蓝牙权限才能连接 Somnil 设备",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            "我们将请求以下权限：蓝牙扫描、蓝牙连接、位置（用于 BLE）、通知",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Button(
+                            onClick = {
+                                permissionLauncher.launch(permissions)
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(containerColor = AccentPurple),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Text("授予权限", color = Color.White)
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            "这些权限仅用于连接 Somnil 睡眠监测设备",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary
+                        )
+                    }
+                }
+            }
 
             // Logo and tagline
             LogoSection()

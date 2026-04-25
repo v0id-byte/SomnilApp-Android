@@ -46,15 +46,20 @@ class MainActivity : ComponentActivity() {
  */
 private class AppLifecycleObserver(private val activity: ComponentActivity) : DefaultLifecycleObserver {
 
+    private var wasInBackground = false
+
     override fun onStart(owner: LifecycleOwner) {
-        // App came to foreground - service will be stopped by HomeViewModel
+        if (wasInBackground) {
+            // User returned from background - start foreground service to keep BLE alive
+            val intent = Intent(activity, BLEMonitoringService::class.java).apply {
+                action = BLEMonitoringService.ACTION_START
+            }
+            activity.startForegroundService(intent)
+        }
+        wasInBackground = false
     }
 
     override fun onStop(owner: LifecycleOwner) {
-        // App went to background - start foreground service to keep BLE alive
-        val intent = Intent(activity, BLEMonitoringService::class.java).apply {
-            action = BLEMonitoringService.ACTION_START
-        }
-        activity.startForegroundService(intent)
+        wasInBackground = true
     }
 }

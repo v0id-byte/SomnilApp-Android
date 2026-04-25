@@ -51,6 +51,8 @@ class DataProcessor @Inject constructor(
         const val THETA_BIN_END = 4    // 8Hz
         const val DELTA_BIN_START = 0    // 0Hz
         const val DELTA_BIN_END = 2     // 4Hz
+        const val EMG_BIN_START = 16    // 30Hz
+        const val EMG_BIN_END = 27      // 50Hz
     }
 
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
